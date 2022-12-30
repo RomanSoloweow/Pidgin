@@ -101,7 +101,7 @@ namespace Pidgin
         var funcArgNames = nums.Select(n => "x" + n);
 
         return $@"
-    internal sealed class Map{num}Parser<TToken, {types}, R> : MapParserBase<TToken, R>
+    internal sealed class Map{num}Parser<TContext, TToken, {types}, R> : MapParserBase<TContext, TToken, R>
     {{
         private readonly Func<{types}, R> _func;
         {string.Join($"{Environment.NewLine}        ", parserFields)}
@@ -115,7 +115,7 @@ namespace Pidgin
             {string.Join($"{Environment.NewLine}            ", parserFieldAssignments)}
         }}
 
-        public sealed override bool TryParse(ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, out R result)
+        public sealed override bool TryParse(ref TContext context, ref ParseState<TToken> state, ref PooledList<Expected<TToken>> expecteds, out R result)
         {{
             {string.Join(Environment.NewLine, parts)}
 

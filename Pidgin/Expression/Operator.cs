@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+using Pidgin.ParsingContext;
+
 namespace Pidgin.Expression
 {
     /// <summary>
@@ -25,10 +27,11 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a single infix operator.</returns>
-        public static OperatorTableRow<TToken, T> Binary<TToken, T>(
+        public static OperatorTableRow<TContext, TToken, T> Binary<TContext, TToken, T>(
             BinaryOperatorType type,
-            Parser<TToken, Func<T, T, T>> opParser
+            Parser<TContext, TToken, Func<T, T, T>> opParser
         )
+            where TContext : IParsingContext
         {
             if (opParser == null)
             {
@@ -54,10 +57,11 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a single unary operator.</returns>
-        public static OperatorTableRow<TToken, T> Unary<TToken, T>(
+        public static OperatorTableRow<TContext, TToken, T> Unary<TContext, TToken, T>(
             UnaryOperatorType type,
-            Parser<TToken, Func<T, T>> opParser
+            Parser<TContext, TToken, Func<T, T>> opParser
         )
+            where TContext : IParsingContext
         {
             if (opParser == null)
             {
@@ -81,14 +85,15 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a single infix operator.</returns>
-        public static OperatorTableRow<TToken, T> InfixN<TToken, T>(Parser<TToken, Func<T, T, T>> opParser)
+        public static OperatorTableRow<TContext, TToken, T> InfixN<TContext, TToken, T>(Parser<TContext, TToken, Func<T, T, T>> opParser)
+            where TContext : IParsingContext
         {
             if (opParser == null)
             {
                 throw new ArgumentNullException(nameof(opParser));
             }
 
-            return new OperatorTableRow<TToken, T>(new[] { opParser }, null, null, null, null);
+            return new OperatorTableRow<TContext, TToken, T>(new[] { opParser }, null, null, null, null);
         }
 
         /// <summary>
@@ -100,14 +105,15 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a single infix operator.</returns>
-        public static OperatorTableRow<TToken, T> InfixL<TToken, T>(Parser<TToken, Func<T, T, T>> opParser)
+        public static OperatorTableRow<TContext, TToken, T> InfixL<TContext, TToken, T>(Parser<TContext, TToken, Func<T, T, T>> opParser)
+            where TContext : IParsingContext
         {
             if (opParser == null)
             {
                 throw new ArgumentNullException(nameof(opParser));
             }
 
-            return new OperatorTableRow<TToken, T>(null, new[] { opParser }, null, null, null);
+            return new OperatorTableRow<TContext, TToken, T>(null, new[] { opParser }, null, null, null);
         }
 
         /// <summary>
@@ -119,14 +125,15 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a single infix operator.</returns>
-        public static OperatorTableRow<TToken, T> InfixR<TToken, T>(Parser<TToken, Func<T, T, T>> opParser)
+        public static OperatorTableRow<TContext, TToken, T> InfixR<TContext, TToken, T>(Parser<TContext, TToken, Func<T, T, T>> opParser)
+            where TContext : IParsingContext
         {
             if (opParser == null)
             {
                 throw new ArgumentNullException(nameof(opParser));
             }
 
-            return new OperatorTableRow<TToken, T>(null, null, new[] { opParser }, null, null);
+            return new OperatorTableRow<TContext, TToken, T>(null, null, new[] { opParser }, null, null);
         }
 
         /// <summary>
@@ -138,14 +145,15 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a single prefix operator.</returns>
-        public static OperatorTableRow<TToken, T> Prefix<TToken, T>(Parser<TToken, Func<T, T>> opParser)
+        public static OperatorTableRow<TContext, TToken, T> Prefix<TContext, TToken, T>(Parser<TContext, TToken, Func<T, T>> opParser)
+            where TContext : IParsingContext
         {
             if (opParser == null)
             {
                 throw new ArgumentNullException(nameof(opParser));
             }
 
-            return new OperatorTableRow<TToken, T>(null, null, null, new[] { opParser }, null);
+            return new OperatorTableRow<TContext, TToken, T>(null, null, null, new[] { opParser }, null);
         }
 
         /// <summary>
@@ -157,14 +165,15 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a single postfix operator.</returns>
-        public static OperatorTableRow<TToken, T> Postfix<TToken, T>(Parser<TToken, Func<T, T>> opParser)
+        public static OperatorTableRow<TContext, TToken, T> Postfix<TContext, TToken, T>(Parser<TContext, TToken, Func<T, T>> opParser)
+            where TContext : IParsingContext
         {
             if (opParser == null)
             {
                 throw new ArgumentNullException(nameof(opParser));
             }
 
-            return new OperatorTableRow<TToken, T>(null, null, null, null, new[] { opParser });
+            return new OperatorTableRow<TContext, TToken, T>(null, null, null, null, new[] { opParser });
         }
 
         /// <summary>
@@ -184,7 +193,8 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a chainable collection of prefix operators.</returns>
-        public static OperatorTableRow<TToken, T> PrefixChainable<TToken, T>(IEnumerable<Parser<TToken, Func<T, T>>> opParsers)
+        public static OperatorTableRow<TContext, TToken, T> PrefixChainable<TContext, TToken, T>(IEnumerable<Parser<TContext, TToken, Func<T, T>>> opParsers)
+            where TContext : IParsingContext
             => Prefix(
                 Parser.OneOf(opParsers)
                     .AtLeastOncePooled()
@@ -219,7 +229,8 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a chainable collection of prefix operators.</returns>
-        public static OperatorTableRow<TToken, T> PrefixChainable<TToken, T>(params Parser<TToken, Func<T, T>>[] opParsers)
+        public static OperatorTableRow<TContext, TToken, T> PrefixChainable<TContext, TToken, T>(params Parser<TContext, TToken, Func<T, T>>[] opParsers)
+            where TContext : IParsingContext
             => PrefixChainable(opParsers.AsEnumerable());
 
         /// <summary>
@@ -239,7 +250,8 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a chainable collection of postfix operators.</returns>
-        public static OperatorTableRow<TToken, T> PostfixChainable<TToken, T>(IEnumerable<Parser<TToken, Func<T, T>>> opParsers)
+        public static OperatorTableRow<TContext, TToken, T> PostfixChainable<TContext, TToken, T>(IEnumerable<Parser<TContext, TToken, Func<T, T>>> opParsers)
+            where TContext : IParsingContext
             => Postfix(
                 Parser.OneOf(opParsers)
                     .AtLeastOncePooled()
@@ -274,7 +286,8 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
         /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
         /// <returns>A row in a table of operators which contains a chainable collection of postfix operators.</returns>
-        public static OperatorTableRow<TToken, T> PostfixChainable<TToken, T>(params Parser<TToken, Func<T, T>>[] opParsers)
+        public static OperatorTableRow<TContext, TToken, T> PostfixChainable<TContext, TToken, T>(params Parser<TContext, TToken, Func<T, T>>[] opParsers)
+            where TContext : IParsingContext
             => PostfixChainable(opParsers.AsEnumerable());
     }
 }

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 
+using Pidgin.ParsingContext;
+
 namespace Pidgin.Permutation
 {
     /// <summary>
@@ -14,10 +16,11 @@ namespace Pidgin.Permutation
         /// </summary>
         /// <typeparam name="TToken">The type of tokens to be consumed by the permutation parser.</typeparam>
         /// <returns>An empty instance of <see cref="PermutationParser{TToken, T}"/>.</returns>
-        public static PermutationParser<TToken, Unit> Create<TToken>()
+        public static PermutationParser<TContext, TToken, Unit> Create<TContext, TToken>()
+            where TContext : IParsingContext
             => new(
                 () => Unit.Value,
-                ImmutableList.Create<PermutationParserBranch<TToken, Unit>>()
+                ImmutableList.Create<PermutationParserBranch<TContext, TToken, Unit>>()
             );
     }
 
@@ -42,13 +45,14 @@ namespace Pidgin.Permutation
     /// <typeparam name="TToken">The type of the tokens in the parser's input stream.</typeparam>
     /// <typeparam name="T">The type of the value returned by the parser.</typeparam>
 #pragma warning disable SA1402  // "File may only contain a single type"
-    public sealed class PermutationParser<TToken, T>
+    public sealed class PermutationParser<TContext, TToken, T>
+        where TContext : IParsingContext
 #pragma warning restore SA1402  // "File may only contain a single type"
     {
         private readonly Func<T>? _exit;
-        private readonly ImmutableList<PermutationParserBranch<TToken, T>> _forest;
+        private readonly ImmutableList<PermutationParserBranch<TContext, TToken, T>> _forest;
 
-        internal PermutationParser(Func<T>? exit, ImmutableList<PermutationParserBranch<TToken, T>> forest)
+        internal PermutationParser(Func<T>? exit, ImmutableList<PermutationParserBranch<TContext, TToken, T>> forest)
         {
             _exit = exit;
             _forest = forest;
@@ -61,12 +65,12 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A <see cref="Parser{TToken, T}"/> which runs the current collection of parsers in an order-insensitive manner.
         /// </returns>
-        public Parser<TToken, T> Build()
+        public Parser<TContext, TToken, T> Build()
         {
             var forest = Parser.OneOf(_forest.Select(t => t.Build()));
             if (_exit != null)
             {
-                return forest.Or(Parser<TToken>.Return(_exit).Select(f => f()));
+                return forest.Or(Parser<TContext, TToken>.Return(_exit).Select(f => f()));
             }
 
             return forest;
@@ -80,7 +84,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added.
         /// </returns>
-        public PermutationParser<TToken, (T, U)> Add<U>(Parser<TToken, U> parser)
+        public PermutationParser<TContext, TToken, (T, U)> Add<U>(Parser<TContext, TToken, U> parser)
             => Add(parser, ValueTuple.Create);
 
         /// <summary>
@@ -95,7 +99,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added.
         /// </returns>
-        public PermutationParser<TToken, R> Add<U, R>(Parser<TToken, U> parser, Func<T, U, R> resultSelector)
+        public PermutationParser<TContext, TToken, R> Add<U, R>(Parser<TContext, TToken, U> parser, Func<T, U, R> resultSelector)
         {
             if (parser == null)
             {
@@ -107,7 +111,7 @@ namespace Pidgin.Permutation
                 throw new ArgumentNullException(nameof(resultSelector));
             }
 
-            return new PermutationParser<TToken, R>(
+            return new PermutationParser<TContext, TToken, R>(
                 null,
                 ConvertForestAndAddParser(b => b.Add(parser, resultSelector), parser, resultSelector)
             );
@@ -124,7 +128,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added optionally.
         /// </returns>
-        public PermutationParser<TToken, (T, Maybe<U>)> AddOptional<U>(Parser<TToken, U> parser)
+        public PermutationParser<TContext, TToken, (T, Maybe<U>)> AddOptional<U>(Parser<TContext, TToken, U> parser)
         {
             if (parser == null)
             {
@@ -146,7 +150,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added optionally.
         /// </returns>
-        public PermutationParser<TToken, (T, U)> AddOptional<U>(Parser<TToken, U> parser, U defaultValue)
+        public PermutationParser<TContext, TToken, (T, U)> AddOptional<U>(Parser<TContext, TToken, U> parser, U defaultValue)
             => AddOptional(parser, () => defaultValue);
 
         /// <summary>
@@ -161,7 +165,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added optionally.
         /// </returns>
-        public PermutationParser<TToken, (T, U)> AddOptional<U>(Parser<TToken, U> parser, Func<U> defaultValueFactory)
+        public PermutationParser<TContext, TToken, (T, U)> AddOptional<U>(Parser<TContext, TToken, U> parser, Func<U> defaultValueFactory)
             => AddOptional(parser, defaultValueFactory, ValueTuple.Create);
 
         /// <summary>
@@ -179,7 +183,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added optionally.
         /// </returns>
-        public PermutationParser<TToken, R> AddOptional<U, R>(Parser<TToken, U> parser, Func<T, Maybe<U>, R> resultSelector)
+        public PermutationParser<TContext, TToken, R> AddOptional<U, R>(Parser<TContext, TToken, U> parser, Func<T, Maybe<U>, R> resultSelector)
         {
             if (parser == null)
             {
@@ -205,7 +209,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added optionally.
         /// </returns>
-        public PermutationParser<TToken, R> AddOptional<U, R>(Parser<TToken, U> parser, U defaultValue, Func<T, U, R> resultSelector)
+        public PermutationParser<TContext, TToken, R> AddOptional<U, R>(Parser<TContext, TToken, U> parser, U defaultValue, Func<T, U, R> resultSelector)
             => AddOptional(parser, () => defaultValue, resultSelector);
 
         /// <summary>
@@ -224,7 +228,7 @@ namespace Pidgin.Permutation
         /// <returns>
         /// A new permutation parser representing the current collection of parsers with <paramref name="parser"/> added optionally.
         /// </returns>
-        public PermutationParser<TToken, R> AddOptional<U, R>(Parser<TToken, U> parser, Func<U> defaultValueFactory, Func<T, U, R> resultSelector)
+        public PermutationParser<TContext, TToken, R> AddOptional<U, R>(Parser<TContext, TToken, U> parser, Func<U> defaultValueFactory, Func<T, U, R> resultSelector)
         {
             if (parser == null)
             {
@@ -242,18 +246,18 @@ namespace Pidgin.Permutation
             }
 
             var this_exit = _exit;
-            return new PermutationParser<TToken, R>(
+            return new PermutationParser<TContext, TToken, R>(
                 this_exit == null ? null : () => resultSelector(this_exit!(), defaultValueFactory()),
                 ConvertForestAndAddParser(b => b.AddOptional(parser, defaultValueFactory, resultSelector), parser, resultSelector)
             );
         }
 
-        private ImmutableList<PermutationParserBranch<TToken, R>> ConvertForestAndAddParser<U, R>(
-            Func<PermutationParserBranch<TToken, T>, PermutationParserBranch<TToken, R>> func,
-            Parser<TToken, U> parser,
+        private ImmutableList<PermutationParserBranch<TContext, TToken, R>> ConvertForestAndAddParser<U, R>(
+            Func<PermutationParserBranch<TContext, TToken, T>, PermutationParserBranch<TContext, TToken, R>> func,
+            Parser<TContext, TToken, U> parser,
             Func<T, U, R> resultSelector
         ) => _forest
             .ConvertAll(func)
-            .Add(new PermutationParserBranchImpl<TToken, U, T, R>(parser, this, resultSelector));
+            .Add(new PermutationParserBranchImpl<TContext, TToken, U, T, R>(parser, this, resultSelector));
     }
 }

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Pidgin.ParsingContext;
+
 using static Pidgin.Parser;
 
 namespace Pidgin.Expression
@@ -62,11 +64,14 @@ namespace Pidgin.Expression
         /// <param name="operatorTable">A table of operators.</param>
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
+        /// <typeparam name="TContext"></typeparam>
         /// <returns>A parser for expressions built from the operators in <paramref name="operatorTable"/>.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Parser<TToken, T> term,
-            IEnumerable<OperatorTableRow<TToken, T>> operatorTable
-        ) => operatorTable.Aggregate(term, Build);
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>
+        (
+            Parser<TContext, TToken, T> term,
+            IEnumerable<OperatorTableRow<TContext, TToken, T>> operatorTable
+        ) where TContext : IParsingContext
+            => operatorTable.Aggregate(term, Build);
 
         /// <summary>
         /// Builds a parser for expressions built from the operators in <paramref name="operatorTable"/>.
@@ -78,10 +83,12 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
         /// <returns>A parser for expressions built from the operators in <paramref name="operatorTable"/>.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Parser<TToken, T> term,
-            IEnumerable<IEnumerable<OperatorTableRow<TToken, T>>> operatorTable
-        ) => Build(term, Flatten(operatorTable));
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>(
+            Parser<TContext, TToken, T> term,
+            IEnumerable<IEnumerable<OperatorTableRow<TContext, TToken, T>>> operatorTable
+        )
+            where TContext : IParsingContext
+            => Build(term, Flatten(operatorTable));
 
         /// <summary>
         /// Builds a parser for expressions built from the operators in <paramref name="operatorTable"/>.
@@ -96,17 +103,18 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
         /// <returns>A parser for expressions built from the operators in <paramref name="operatorTable"/>.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Func<Parser<TToken, T>, Parser<TToken, T>> termFactory,
-            IEnumerable<OperatorTableRow<TToken, T>> operatorTable
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>(
+            Func<Parser<TContext, TToken, T>, Parser<TContext, TToken, T>> termFactory,
+            IEnumerable<OperatorTableRow<TContext, TToken, T>> operatorTable
         )
+            where TContext : IParsingContext
         {
             if (termFactory == null)
             {
                 throw new ArgumentNullException(nameof(termFactory));
             }
 
-            Parser<TToken, T>? expr = null;
+            Parser<TContext, TToken, T>? expr = null;
             var term = termFactory(Rec(() => expr!));
             expr = Build(term, operatorTable);
             return expr;
@@ -125,10 +133,12 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
         /// <returns>A parser for expressions built from the operators in <paramref name="operatorTable"/>.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Func<Parser<TToken, T>, Parser<TToken, T>> termFactory,
-            IEnumerable<IEnumerable<OperatorTableRow<TToken, T>>> operatorTable
-        ) => Build(termFactory, Flatten(operatorTable));
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>(
+            Func<Parser<TContext, TToken, T>, Parser<TContext, TToken, T>> termFactory,
+            IEnumerable<IEnumerable<OperatorTableRow<TContext, TToken, T>>> operatorTable
+        ) 
+            where TContext : IParsingContext
+            => Build(termFactory, Flatten(operatorTable));
 
         /// <summary>
         /// Builds a parser for expressions built from the operators in <paramref name="operatorTableFactory"/>'s result.
@@ -143,17 +153,18 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
         /// <returns>A parser for expressions built from the operators in the operator table.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Parser<TToken, T> term,
-            Func<Parser<TToken, T>, IEnumerable<OperatorTableRow<TToken, T>>> operatorTableFactory
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>(
+            Parser<TContext, TToken, T> term,
+            Func<Parser<TContext, TToken, T>, IEnumerable<OperatorTableRow<TContext, TToken, T>>> operatorTableFactory
         )
+            where TContext : IParsingContext
         {
             if (operatorTableFactory == null)
             {
                 throw new ArgumentNullException(nameof(operatorTableFactory));
             }
 
-            Parser<TToken, T>? expr = null;
+            Parser<TContext, TToken, T>? expr = null;
             var operatorTable = operatorTableFactory(Rec(() => expr!));
             expr = Build(term, operatorTable);
             return expr;
@@ -172,17 +183,18 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
         /// <returns>A parser for expressions built from the operators in the operator table.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Parser<TToken, T> term,
-            Func<Parser<TToken, T>, IEnumerable<IEnumerable<OperatorTableRow<TToken, T>>>> operatorTableFactory
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>(
+            Parser<TContext, TToken, T> term,
+            Func<Parser<TContext, TToken, T>, IEnumerable<IEnumerable<OperatorTableRow<TContext, TToken, T>>>> operatorTableFactory
         )
+            where TContext : IParsingContext
         {
             if (operatorTableFactory == null)
             {
                 throw new ArgumentNullException(nameof(operatorTableFactory));
             }
 
-            Parser<TToken, T>? expr = null;
+            Parser<TContext, TToken, T>? expr = null;
             var operatorTable = operatorTableFactory(Rec(() => expr!));
             expr = Build(term, operatorTable);
             return expr;
@@ -200,16 +212,18 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
         /// <returns>A parser for expressions built from the operators in the operator table.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Func<Parser<TToken, T>, (Parser<TToken, T> term, IEnumerable<OperatorTableRow<TToken, T>> operatorTable)> termAndOperatorTableFactory
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>
+        (
+            Func<Parser<TContext, TToken, T>, (Parser<TContext, TToken, T> term, IEnumerable<OperatorTableRow<TContext, TToken, T>> operatorTable)> termAndOperatorTableFactory
         )
+            where TContext : IParsingContext
         {
             if (termAndOperatorTableFactory == null)
             {
                 throw new ArgumentNullException(nameof(termAndOperatorTableFactory));
             }
 
-            Parser<TToken, T>? expr = null;
+            Parser<TContext, TToken, T>? expr = null;
             var (term, operatorTable) = termAndOperatorTableFactory(Rec(() => expr!));
             expr = Build(term, operatorTable);
             return expr;
@@ -227,24 +241,26 @@ namespace Pidgin.Expression
         /// <typeparam name="TToken">The token type.</typeparam>
         /// <typeparam name="T">The return type of the parser.</typeparam>
         /// <returns>A parser for expressions built from the operators in the operator table.</returns>
-        public static Parser<TToken, T> Build<TToken, T>(
-            Func<Parser<TToken, T>, (Parser<TToken, T> term, IEnumerable<IEnumerable<OperatorTableRow<TToken, T>>> operatorTable)> termAndOperatorTableFactory
+        public static Parser<TContext, TToken, T> Build<TContext, TToken, T>(
+            Func<Parser<TContext, TToken, T>, (Parser<TContext, TToken, T> term, IEnumerable<IEnumerable<OperatorTableRow<TContext, TToken, T>>> operatorTable)> termAndOperatorTableFactory
         )
+            where TContext : IParsingContext
         {
             if (termAndOperatorTableFactory == null)
             {
                 throw new ArgumentNullException(nameof(termAndOperatorTableFactory));
             }
 
-            Parser<TToken, T>? expr = null;
+            Parser<TContext, TToken, T>? expr = null;
             var (term, operatorTable) = termAndOperatorTableFactory(Rec(() => expr!));
             expr = Build(term, operatorTable);
             return expr;
         }
 
-        private static Parser<TToken, T> Build<TToken, T>(Parser<TToken, T> term, OperatorTableRow<TToken, T> row)
+        private static Parser<TContext, TToken, T> Build<TContext, TToken, T>(Parser<TContext, TToken, T> term, OperatorTableRow<TContext, TToken, T> row)
+            where TContext : IParsingContext
         {
-            var returnIdentity = Parser<TToken>.Return<Func<T, T>>(x => x);
+            var returnIdentity = Parser.Return<TContext, TToken, Func<T, T>>(x => x);
             var returnIdentityArray = new[] { returnIdentity };
 
             var pTerm = Map(
@@ -254,7 +270,7 @@ namespace Pidgin.Expression
                 OneOf(row.PostfixOps.Concat(returnIdentityArray))
             );
 
-            var infixN = Op(pTerm, row.InfixNOps).Select<Func<T, T>>(p => z => p.ApplyL(z));
+            var infixN = Op(pTerm, row.InfixNOps).Select<Func<T, T>>(p => p.ApplyL);
             var infixL = Op(pTerm, row.InfixLOps)
                 .AtLeastOncePooled()
                 .Select<Func<T, T>>(fxs =>
@@ -303,15 +319,17 @@ namespace Pidgin.Expression
             );
         }
 
-        private static Parser<TToken, Partial<T>> Op<TToken, T>(Parser<TToken, T> pTerm, IEnumerable<Parser<TToken, Func<T, T, T>>> ops)
+        private static Parser<TContext, TToken, Partial<T>> Op<TContext, TToken, T>(Parser<TContext, TToken, T> pTerm, IEnumerable<Parser<TContext, TToken, Func<T, T, T>>> ops)
+            where TContext : IParsingContext
             => Map(
                 (f, y) => new Partial<T>(f, y),
                 OneOf(ops),
                 pTerm
             );
 
-        private static IEnumerable<OperatorTableRow<TToken, T>> Flatten<TToken, T>(IEnumerable<IEnumerable<OperatorTableRow<TToken, T>>> operatorTable)
-            => operatorTable.Select(r => r.Aggregate(OperatorTableRow<TToken, T>.Empty, (p, q) => p.And(q)));
+        private static IEnumerable<OperatorTableRow<TContext, TToken, T>> Flatten<TContext, TToken, T>(IEnumerable<IEnumerable<OperatorTableRow<TContext, TToken, T>>> operatorTable)
+            where TContext : IParsingContext
+            => operatorTable.Select(r => r.Aggregate(OperatorTableRow<TContext, TToken, T>.Empty, (p, q) => p.And(q)));
 
         private struct Partial<T>
         {

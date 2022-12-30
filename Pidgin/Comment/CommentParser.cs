@@ -1,7 +1,8 @@
 using System;
 
+using Pidgin.ParsingContext;
+
 using static Pidgin.Parser;
-using static Pidgin.Parser<char>;
 
 namespace Pidgin.Comment
 {
@@ -15,8 +16,10 @@ namespace Pidgin.Comment
         /// </summary>
         /// <param name="lineCommentStart">A parser to recognise a lexeme which starts a line comment.</param>
         /// <typeparam name="T">The return type of the <paramref name="lineCommentStart"/> parser.</typeparam>
+        /// <typeparam name="TContext"></typeparam>
         /// <returns>A parser which runs <paramref name="lineCommentStart"/>, then skips the rest of the line.</returns>
-        public static Parser<char, Unit> SkipLineComment<T>(Parser<char, T> lineCommentStart)
+        public static Parser<TContext, char, Unit> SkipLineComment<TContext, T>(Parser<TContext, char, T> lineCommentStart)
+            where TContext : IParsingContext
         {
             if (lineCommentStart == null)
             {
@@ -37,10 +40,12 @@ namespace Pidgin.Comment
         /// <param name="blockCommentEnd">A parser to recognise a lexeme which ends a multi-line block comment.</param>
         /// <typeparam name="T">The return type of the <paramref name="blockCommentStart"/> parser.</typeparam>
         /// <typeparam name="U">The return type of the <paramref name="blockCommentEnd"/> parser.</typeparam>
+        /// <typeparam name="TContext"></typeparam>
         /// <returns>
         /// A parser which runs <paramref name="blockCommentStart"/>, then skips everything until <paramref name="blockCommentEnd"/>.
         /// </returns>
-        public static Parser<char, Unit> SkipBlockComment<T, U>(Parser<char, T> blockCommentStart, Parser<char, U> blockCommentEnd)
+        public static Parser<TContext, char, Unit> SkipBlockComment<TContext, T, U>(Parser<TContext, char, T> blockCommentStart, Parser<TContext, char, U> blockCommentEnd)
+            where TContext : IParsingContext
         {
             if (blockCommentStart == null)
             {
@@ -53,7 +58,7 @@ namespace Pidgin.Comment
             }
 
             return blockCommentStart
-                .Then(Any.SkipUntil(blockCommentEnd))
+                .Then(Any<TContext, T>.SkipUntil(blockCommentEnd))
                 .Labelled("block comment");
         }
 
@@ -65,11 +70,13 @@ namespace Pidgin.Comment
         /// <param name="blockCommentEnd">A parser to recognise a lexeme which ends a multi-line block comment.</param>
         /// <typeparam name="T">The return type of the <paramref name="blockCommentStart"/> parser.</typeparam>
         /// <typeparam name="U">The return type of the <paramref name="blockCommentEnd"/> parser.</typeparam>
+        /// <typeparam name="TContext"></typeparam>
         /// <returns>
         /// A parser which runs <paramref name="blockCommentStart"/>,
         /// then skips everything until <paramref name="blockCommentEnd"/>, accounting for nested comments.
         /// </returns>
-        public static Parser<char, Unit> SkipNestedBlockComment<T, U>(Parser<char, T> blockCommentStart, Parser<char, U> blockCommentEnd)
+        public static Parser<TContext, char, Unit> SkipNestedBlockComment<TContext, T, U>(Parser<TContext, char, T> blockCommentStart, Parser<TContext, char, U> blockCommentEnd)
+            where TContext : IParsingContext
         {
             if (blockCommentStart == null)
             {
@@ -81,7 +88,7 @@ namespace Pidgin.Comment
                 throw new ArgumentNullException(nameof(blockCommentEnd));
             }
 
-            Parser<char, Unit>? parser = null;
+            Parser<TContext, char, Unit>? parser = null;
 
             parser = blockCommentStart.Then(
                 Rec(() => parser!).Or(Any.IgnoreResult()).SkipUntil(blockCommentEnd)
